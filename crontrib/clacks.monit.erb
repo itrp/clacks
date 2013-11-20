@@ -1,0 +1,6 @@
+check process clacks with pidfile /srv/<%= service_domain %>/shared/pids/clacks.pid
+  start program = "/etc/init.d/clacks start"
+  stop program = "/etc/init.d/clacks stop"
+  if mem > 300.0 MB for 1 cycles then restart
+  if cpu > 50% for 2 cycles then alert
+  if cpu > 80% for 3 cycles then restart

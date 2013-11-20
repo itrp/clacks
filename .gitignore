@@ -1,0 +1,14 @@
+.DS_Store
+.Gemfile
+.ruby-gemset
+.ruby-version
+.idea
+/.bundle
+/.rvmrc
+/coverage
+/doc
+/pkg
+/tags
+/Gemfile.lock
+clacks*.gem
+TODO

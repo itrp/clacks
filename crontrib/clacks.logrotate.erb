@@ -1,0 +1,14 @@
+/srv/<%= service_domain %>/shared/log/clacks*.log {
+    weekly
+    missingok
+    rotate 4
+    compress
+    delaycompress
+    # notifempty
+    create 640 adm adm
+    sharedscripts
+    postrotate
+        test ! -f /srv/<%= service_domain %>/shared/pids/clacks.pid || /etc/init.d/clacks reopen-logs
+    endscript
+}
+

@@ -1,0 +1,82 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          clacks
+# Required-Start:    $all
+# Required-Stop:     $all
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: starts the clacks server
+# Description:       starts clacks with an unpriviledged user
+### END INIT INFO
+
+set -eu
+
+APP_NAME=<%= service_domain %>
+ENV=<%= stage %>
+CLACKS_UID=<%= deployer_user %>
+
+APP_ROOT=/srv/$APP_NAME/current
+PIDFILE=/srv/$APP_NAME/shared/pids/clacks.pid
+CLACKS_CONFIG=$APP_ROOT/config/clacks.rb
+CLACKS_PROCESS_NAME=clacks
+CLACKS_OPTS="-D -E $ENV -c $CLACKS_CONFIG"
+DAEMON_CMD="cd $APP_ROOT ; bundle exec $CLACKS_PROCESS_NAME $CLACKS_OPTS"
+DESC=clacks
+NAME=clacks
+
+cd $APP_ROOT || exit 1
+
+sig() {
+  test -s $2 && kill -s $1 `cat $2`
+}
+
+start() {
+  if [ "$(whoami)" == "$CLACKS_UID" ] ; then
+    eval $DAEMON_CMD
+  else
+    su -l $CLACKS_UID -c "$DAEMON_CMD"
+  fi
+}
+
+case "$1" in
+  start)
+        echo -n "Starting $DESC: "
+        sig 0 $PIDFILE || start
+        echo "$NAME."
+        ;;
+  stop)
+        echo -n "Stopping $DESC: "
+        sig QUIT $PIDFILE || true
+        echo "$NAME."
+        ;;
+  force-stop)
+        echo -n "Force stopping $DESC: "
+        sig TERM $PIDFILE || true
+        echo "$NAME."
+        ;;
+  restart)
+        echo -n "Restarting $DESC: "
+        if sig 0 $PIDFILE
+        then sig QUIT $PIDFILE && start || true
+        else start
+        fi
+        echo "$NAME."
+        ;;
+  reopen-logs)
+        echo -n "Reopen $DESC logs: "
+        sig USR1 $PIDFILE || echo -n "not running "
+        echo "$NAME."
+        ;;
+  status)
+        ! test -s $PIDFILE && echo " * could not access PID file for $NAME" && exit -1
+        ! kill -s 0 `cat $PIDFILE` && echo " * $NAME is not running" && exit -1
+        echo " * $NAME is running"
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|force-stop|restart|reopen-logs|status}" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

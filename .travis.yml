@@ -1,0 +1,12 @@
+rvm:
+  - 1.8.7
+  - 1.9.3
+branches:
+  only:
+    - master
+notifications:
+  email:
+    recipients:
+       - mathijs.sterk@itrp.com
+    on_success: change
+    on_failure: always
