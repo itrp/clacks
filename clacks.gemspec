@@ -8,6 +8,7 @@ Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
   s.authors = ["ITRP"]
   s.email = %q{mathijs.sterk@itrp.com}
+  s.license = 'MIT'
   s.homepage = %q{http://github.com/itrp/clacks}
   s.summary = %q{Clacks system for receiving emails}
   s.description = %q{Clacks system for receiving emails to be processed in ruby}
