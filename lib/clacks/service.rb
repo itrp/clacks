@@ -139,9 +139,10 @@ module Clacks
           break if stopping?
           source = imap.uid_fetch(uid, ['RFC822']).first.attr['RFC822']
           break if stopping?
-          mail = Mail.new(source)
-          mail.mark_for_delete = true if options[:delete_after_find]
+          mail = nil
           begin
+            mail = Mail.new(source)
+            mail.mark_for_delete = true if options[:delete_after_find]
             Clacks.config[:on_mail].call(mail)
           rescue Exception => e
             Clacks.logger.debug(e.message)
@@ -149,7 +150,7 @@ module Clacks
           end
           begin
             imap.uid_copy(uid, options[:archivebox]) if options[:archivebox]
-            if options[:delete_after_find] && mail.is_marked_for_delete?
+            if options[:delete_after_find] && (mail.nil? || mail.is_marked_for_delete?)
               imap.uid_store(uid, "+FLAGS", [Net::IMAP::DELETED])
             end
           rescue Exception => e
