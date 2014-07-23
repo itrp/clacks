@@ -127,6 +127,7 @@ module Clacks
     # or until a QUIT signal is received to stop the process.
     def imap_find(imap)
       options = Clacks.config[:find_options]
+      delete_after_find = options[:delete_after_find]
       begin
         break if stopping?
         uids = imap.uid_search(options[:keys] || 'ALL')
@@ -135,14 +136,14 @@ module Clacks
         uids.reverse! if (options[:what].to_sym == :last && options[:order].to_sym == :asc) ||
                          (options[:what].to_sym != :last && options[:order].to_sym == :desc)
         processed = 0
+        expunge = false
         uids.each do |uid|
           break if stopping?
           source = imap.uid_fetch(uid, ['RFC822']).first.attr['RFC822']
-          break if stopping?
           mail = nil
           begin
             mail = Mail.new(source)
-            mail.mark_for_delete = true if options[:delete_after_find]
+            mail.mark_for_delete = true if delete_after_find
             Clacks.config[:on_mail].call(mail)
           rescue Exception => e
             Clacks.logger.debug(e.message)
@@ -150,7 +151,8 @@ module Clacks
           end
           begin
             imap.uid_copy(uid, options[:archivebox]) if options[:archivebox]
-            if options[:delete_after_find] && (mail.nil? || mail.is_marked_for_delete?)
+            if delete_after_find && (mail.nil? || mail.is_marked_for_delete?)
+              expunge = true
               imap.uid_store(uid, "+FLAGS", [Net::IMAP::DELETED])
             end
           rescue Exception => e
@@ -158,7 +160,7 @@ module Clacks
           end
           processed += 1
         end
-        imap.expunge if options[:delete_after_find]
+        imap.expunge if expunge
       end while uids.any? && processed == uids.length
     end
 
