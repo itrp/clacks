@@ -82,6 +82,8 @@ module Clacks
       end
       write_pid(pid)
 
+      config[:after_initialize].call if config[:after_initialize]
+
       proc_name('master')
 
       setup_signal_handling

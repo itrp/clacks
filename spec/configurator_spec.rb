@@ -28,16 +28,32 @@ describe Clacks::Configurator do
     expect { Clacks::Configurator.new(path) }.to raise_error(Errno::ENOENT)
   end
 
-  it "should test for arity of the on_mail proc" do
-    tmp = Tempfile.new('clacks.config')
-    tmp.syswrite(%[on_mail{|x,y|x+y}])
-    expect { Clacks::Configurator.new(tmp.path) }.to raise_error(ArgumentError, /on_mail=.* has invalid arity: 2 \(need 1\)/)
+  context 'on_mail proc' do
+    it "should test for arity of the on_mail proc" do
+      tmp = Tempfile.new('clacks.config')
+      tmp.syswrite(%[on_mail{|x,y|x+y}])
+      expect { Clacks::Configurator.new(tmp.path) }.to raise_error(ArgumentError, /on_mail=.* has invalid arity: 2 \(need 1\)/)
+    end
+
+    it "should configure the on_mail hook" do
+      tmp = Tempfile.new('clacks.config')
+      tmp.syswrite(%[on_mail{|mail|mail+1}])
+      Clacks::Configurator.new(tmp.path)[:on_mail].call(5).should == 6
+    end
   end
 
-  it "should configure the on_mail hook" do
-    tmp = Tempfile.new('clacks.config')
-    tmp.syswrite(%[on_mail{|mail|mail+1}])
-    Clacks::Configurator.new(tmp.path)[:on_mail].call(5).should == 6
+  context 'after_initialize proc' do
+    it "should test for arity of the after_initialize proc" do
+      tmp = Tempfile.new('clacks.config')
+      tmp.syswrite(%[after_initialize{|x,y|x+y}])
+      expect { Clacks::Configurator.new(tmp.path) }.to raise_error(ArgumentError, /after_initialize=.* has invalid arity: 2 \(need 0\)/)
+    end
+
+    it "should configure the after_initialize hook" do
+      tmp = Tempfile.new('clacks.config')
+      tmp.syswrite(%[after_initialize { 42 }])
+      Clacks::Configurator.new(tmp.path)[:after_initialize].call.should == 42
+    end
   end
 
 end

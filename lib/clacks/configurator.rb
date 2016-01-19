@@ -68,7 +68,11 @@ module Clacks
     end
 
     def on_mail(*args, &block)
-      set_hook(:on_mail, block_given? ? block : args[0])
+      set_hook(:on_mail, 1, block_given? ? block : args[0])
+    end
+
+    def after_initialize(*args, &block)
+      set_hook(:after_initialize, 0, block_given? ? block : args[0])
     end
 
     private
@@ -83,10 +87,10 @@ module Clacks
         map[var] = hash
       end
 
-      def set_hook(var, proc) #:nodoc:
+      def set_hook(var, expected_arity, proc) #:nodoc:
         raise ArgumentError unless proc.is_a?(Proc)
-        unless proc.arity == 1
-          raise ArgumentError, "#{var}=#{proc.inspect} has invalid arity: #{proc.arity} (need 1)"
+        unless proc.arity == expected_arity
+          raise ArgumentError, "#{var}=#{proc.inspect} has invalid arity: #{proc.arity} (need #{expected_arity})"
         end
         map[var] = proc
       end
