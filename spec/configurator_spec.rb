@@ -1,4 +1,3 @@
-# -*- encoding: binary -*-
 require 'spec_helper'
 require 'tempfile'
 
@@ -6,13 +5,13 @@ describe Clacks::Configurator do
 
   it "has defaults" do
     config = Clacks::Configurator.new
-    config[:poll_interval].should == 60
-    config[:pid].should be_nil
-    config[:stdout_path].should be_nil
-    config[:stderr_path].should be_nil
-    config[:on_mail].call(Mail.new(:from => "foo@example.com", :subject => "foo"))
+    expect(config[:poll_interval]).to eq(60)
+    expect(config[:pid]).to be_nil
+    expect(config[:stdout_path]).to be_nil
+    expect(config[:stderr_path]).to be_nil
+    config[:on_mail].call(Mail.new(from: 'foo@example.com', subject: 'foo'))
     last_log_line = `tail -n 1 /tmp/clacks.log`
-    last_log_line.should =~ /Mail from foo@example.com, subject: foo/
+    expect(last_log_line).to include('Mail from foo@example.com, subject: foo')
   end
 
   it "has invalid config" do
@@ -38,7 +37,7 @@ describe Clacks::Configurator do
     it "should configure the on_mail hook" do
       tmp = Tempfile.new('clacks.config')
       tmp.syswrite(%[on_mail{|mail|mail+1}])
-      Clacks::Configurator.new(tmp.path)[:on_mail].call(5).should == 6
+      expect(Clacks::Configurator.new(tmp.path)[:on_mail].call(5)).to eq(6)
     end
   end
 
@@ -52,7 +51,7 @@ describe Clacks::Configurator do
     it "should configure the after_initialize hook" do
       tmp = Tempfile.new('clacks.config')
       tmp.syswrite(%[after_initialize { 42 }])
-      Clacks::Configurator.new(tmp.path)[:after_initialize].call.should == 42
+      expect(Clacks::Configurator.new(tmp.path)[:after_initialize].call).to eq(42)
     end
   end
 

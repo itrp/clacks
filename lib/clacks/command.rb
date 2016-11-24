@@ -1,4 +1,3 @@
-# -*- encoding: binary -*-
 module Clacks
   class Command
     require 'optparse'
@@ -7,7 +6,7 @@ module Clacks
     PROC_ARGV = ARGV.map { |a| a.dup }
 
     def initialize(args)
-      @options = { :config_file => "config/clacks.rb" }
+      @options = { config_file: 'config/clacks.rb' }
 
       opts = OptionParser.new do |opts|
         opts.banner = "Usage: #{PROC_NAME} [options]"
@@ -73,7 +72,7 @@ module Clacks
       reopen_io($stderr, config[:stderr_path])
 
       unless config[:pid]
-        config.pid(@options[:pid] || (defined?(Rails) && Rails.version =~ /^2/ ? 'tmp/pids/clacks.pid' : 'clacks.pid'))
+        config.pid(@options[:pid] || 'clacks.pid')
       end
       pid = config[:pid]
       if wpid = running?(pid)
@@ -152,11 +151,11 @@ module Clacks
     end
 
     def setup_signal_handling
-      stop_signal = (Signal.list.keys & ['QUIT', 'INT']).first
-      Signal.trap(stop_signal) do
-        Thread.new { Clacks.logger.info 'QUIT signal received. Shutting down gracefully.' }
+      graceful_exit_signal = (Signal.list.keys & ['INT', 'QUIT', 'TERM']).sort.last
+      Signal.trap(graceful_exit_signal) do
+        Thread.new { Clacks.logger.info 'Exiting...' }
         @service.stop if @service
-      end unless stop_signal.nil?
+      end unless graceful_exit_signal.nil?
 
       Signal.trap('USR1') do
         Thread.new { Clacks.logger.info 'USR1 signal received. Rotating logs.' }

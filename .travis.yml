@@ -1,6 +1,6 @@
 rvm:
   - 2.2.2
-  - 2.2.3
+  - 2.3.3
 
 branches:
   only:
@@ -11,5 +11,6 @@ notifications:
     recipients:
        - mathijs.sterk@itrp.com
        - robin.roestenburg@itrp.com
+       - laurens.pit@itrp.com
     on_success: change
     on_failure: always

@@ -1,4 +1,3 @@
-# -*- encoding: binary -*-
 module Clacks
   class Configurator
     require 'logger'

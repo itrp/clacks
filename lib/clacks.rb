@@ -1,4 +1,3 @@
-# -*- encoding: binary -*-
 module Clacks
   require 'clacks/version'
   require 'clacks/configurator'

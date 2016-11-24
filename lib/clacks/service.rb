@@ -1,4 +1,3 @@
-# -*- encoding: binary -*-
 module Clacks
   class Service
     # TODO: find the root cause and remove workaround below, @see http://stackoverflow.com/a/16007377/3774613

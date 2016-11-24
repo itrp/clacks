@@ -1,4 +1,4 @@
-# Clacks 
+# Clacks
 
 [![Build Status](https://secure.travis-ci.org/itrp/clacks.png)](http://travis-ci.org/itrp/clacks?branch=master)
 [![Code Climate](https://codeclimate.com/badge.png)](https://codeclimate.com/github/itrp/clacks)
@@ -21,7 +21,6 @@ If you use Rails, add this to your Gemfile:
 Then create a configuration file, using ruby syntax, such as:
 
 ``` ruby
-# -*- encoding: binary -*-
 # Configuration of clacks
 # See Clacks::Configurator for documentation on options
 #
@@ -85,20 +84,14 @@ See the [contrib](https://github.com/itrp/clacks/tree/master/contrib/) directory
 Signals
 -------
 
-* INT/TERM - quick shutdown, kills the process immediately.
+* KILL - quick shutdown, kills the process immediately.
 
-* QUIT - graceful shutdown, waits for the worker process to finish processing an email.
+* TERM/QUIT/INT - graceful shutdown, waits for the worker process to finish processing an email.
 
 * USR1 - reopen logs
-
-
-Author
-----------
-
-ITRP, mathijs.sterk@itrp.com, [developer.itrp.com](http://developer.itrp.com)
 
 
 Copyright
 -----------
 
-Copyright (c) 2013 ITRP. See MIT-LICENSE for details.
+Copyright (c) 2013-2016 ITRP. See MIT-LICENSE for details.
