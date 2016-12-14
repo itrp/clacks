@@ -24,8 +24,7 @@ module Clacks
           raise "Either a POP3 or an IMAP server must be configured"
         end
       rescue Exception => e
-        Clacks.logger.error("#{e.message} (#{e.class})\n#{(e.backtrace || []).join("\n")}")
-        raise e
+        fatal(e)
       end
     end
 
@@ -35,6 +34,14 @@ module Clacks
     end
 
     private
+
+    def fatal(e)
+      unless e.is_a?(SystemExit) || e.is_a?(SignalException)
+        Clacks.logger.fatal("#{e.message} (#{e.class})\n#{(e.backtrace || []).join("\n")}")
+      end
+      stop
+      raise e
+    end
 
     def run_pop3
       config = Clacks.config[:pop3]
@@ -108,6 +115,8 @@ module Clacks
           # reconnect in next loop
         rescue Net::IMAP::Error, IOError => e
           # OK: reconnect in next loop
+        rescue Errno::ECONNRESET => e
+          # Connection reset by peer: reconnect in next loop
         rescue StandardError => e
           Clacks.logger.error("#{e.message} (#{e.class})\n#{(e.backtrace || []).join("\n")}")
           sleep(5) unless stopping?
@@ -126,8 +135,7 @@ module Clacks
           rescue StandardError
             # noop
           rescue Exception => e
-            Clacks.logger.error("#{e.message} (#{e.class})\n#{(e.backtrace || []).join("\n")}")
-            raise e
+            fatal(e)
           end
         end
       end
