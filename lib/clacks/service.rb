@@ -10,7 +10,7 @@ module Clacks
     #   IMAP server timeout: typically after 30 minutes with no activity.
     #   NAT Gateway timeout: typically after 15 minutes with an idle connection.
     # The solution to this is for the IMAP client to issue a NOOP (No Operation) command
-    # at intervals, typically every 12 minutes.
+    # at intervals, typically every 29 minutes.
     WATCHDOG_SLEEP = 5 * 60   # 5 minutes
 
     def run
@@ -55,8 +55,10 @@ module Clacks
       config = Clacks.config[:imap]
       options = Clacks.config[:find_options]
       processor = Mail::IMAP.new(config)
-      require 'clacks/stdlib_extensions/ruby_1_8' if RUBY_VERSION.to_f < 1.9
-      Net::IMAP.debug = $DEBUG
+      if $DEBUG
+        Net::IMAP.debug = true
+        Clacks.logger.level = Logger::DEBUG
+      end
       imap_validate_options(options)
       if imap_idle_support?(processor)
         Clacks.logger.info("Clacks IMAP idling #{config[:user_name]}@#{config[:address]}")
@@ -99,6 +101,7 @@ module Clacks
               break if stopping?
               finding { imap_find(imap) }
               # http://tools.ietf.org/rfc/rfc2177.txt
+              Clacks.logger.debug('imap.idle start')
               imap.idle do |r|
                 Clacks.logger.debug('imap.idle yields')
                 if r.instance_of?(Net::IMAP::UntaggedResponse) && r.name == 'EXISTS'
@@ -135,10 +138,8 @@ module Clacks
             Clacks.logger.debug('watchdog is awake')
             @imap.idle_done
             Clacks.logger.debug('watchdog send idle done')
-            @imap.noop
-            Clacks.logger.debug('watchdog send noop')
           rescue StandardError => e
-            Clacks.logger.debug("watchdog received error: #{e.message}")
+            Clacks.logger.debug("watchdog received error: #{e.message} (#{e.class})\n#{(e.backtrace || []).join("\n")}")
             # noop
           rescue Exception => e
             fatal(e)
