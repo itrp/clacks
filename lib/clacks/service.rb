@@ -10,17 +10,22 @@ module Clacks
     #   IMAP server timeout: typically after 30 minutes with no activity.
     #   NAT Gateway timeout: typically after 15 minutes with an idle connection.
     # The solution to this is for the IMAP client to issue a NOOP (No Operation) command
-    # at intervals, typically every 15 minutes.
-    IMAP_NOOP_SLEEP = 15 * 60   # 15 minutes
+    # at intervals, typically every 12 minutes.
+    IMAP_NOOP_SLEEP = 12 * 60   # 12 minutes
 
     def run
-      Clacks.logger.info "Clacks v#{Clacks::VERSION} started"
-      if Clacks.config[:pop3]
-        run_pop3
-      elsif Clacks.config[:imap]
-        run_imap
-      else
-        raise "Either a POP3 or an IMAP server must be configured"
+      begin
+        Clacks.logger.info "Clacks v#{Clacks::VERSION} started"
+        if Clacks.config[:pop3]
+          run_pop3
+        elsif Clacks.config[:imap]
+          run_imap
+        else
+          raise "Either a POP3 or an IMAP server must be configured"
+        end
+      rescue Exception => e
+        Clacks.logger.error("#{e.message} (#{e.class})\n#{(e.backtrace || []).join("\n")}")
+        raise e
       end
     end
 
@@ -103,7 +108,7 @@ module Clacks
           # reconnect in next loop
         rescue Net::IMAP::Error, IOError => e
           # OK: reconnect in next loop
-        rescue => e
+        rescue StandardError => e
           Clacks.logger.error("#{e.message} (#{e.class})\n#{(e.backtrace || []).join("\n")}")
           sleep(5) unless stopping?
         end
@@ -112,14 +117,17 @@ module Clacks
     end
 
     def imap_nooper
-      @imap_nooper = Thread.new do
+      Thread.new do
         loop do
           begin
             sleep IMAP_NOOP_SLEEP
             @imap.idle_done
             @imap.noop
-          rescue
+          rescue StandardError
             # noop
+          rescue Exception => e
+            Clacks.logger.error("#{e.message} (#{e.class})\n#{(e.backtrace || []).join("\n")}")
+            raise e
           end
         end
       end
@@ -147,9 +155,9 @@ module Clacks
             mail = Mail.new(source)
             mail.mark_for_delete = true if delete_after_find
             Clacks.config[:on_mail].call(mail)
-          rescue Exception => e
-            Clacks.logger.debug(e.message)
-            Clacks.logger.debug(e.backtrace)
+          rescue StandardError => e
+            Clacks.logger.error(e.message)
+            Clacks.logger.error(e.backtrace)
           end
           begin
             imap.uid_copy(uid, options[:archivebox]) if options[:archivebox]
@@ -157,7 +165,7 @@ module Clacks
               expunge = true
               imap.uid_store(uid, "+FLAGS", [Net::IMAP::DELETED])
             end
-          rescue Exception => e
+          rescue StandardError => e
             Clacks.logger.error(e.message)
           end
           processed += 1
@@ -185,9 +193,9 @@ module Clacks
             else
               begin
                 on_mail.call(mail)
-              rescue Exception => e
-                Clacks.logger.debug(e.message)
-                Clacks.logger.debug(e.backtrace)
+              rescue StandardError => e
+                Clacks.logger.error(e.message)
+                Clacks.logger.error(e.backtrace)
               end
             end
           end
