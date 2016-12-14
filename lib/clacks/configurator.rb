@@ -5,7 +5,7 @@ module Clacks
 
     DEFAULTS = {
       :poll_interval => 60,
-      :logger => Logger.new($stderr),
+      :logger => Logger.new($stderr).tap { |logger| logger.level = Logger::INFO },
       :on_mail => lambda { |mail|
         Clacks.logger.info("Mail from #{mail.from.first}, subject: #{mail.subject}")
       }

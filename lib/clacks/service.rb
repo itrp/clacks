@@ -10,8 +10,8 @@ module Clacks
     #   IMAP server timeout: typically after 30 minutes with no activity.
     #   NAT Gateway timeout: typically after 15 minutes with an idle connection.
     # The solution to this is for the IMAP client to issue a NOOP (No Operation) command
-    # at intervals, typically every 29 minutes.
-    WATCHDOG_SLEEP = 5 * 60   # 5 minutes
+    # at intervals, typically every 29 minutes. We choose default 10 minutes.
+    WATCHDOG_SLEEP = ENV['CLACKS_WATCHDOG_SLEEP'] || 10 * 60   # default 10 minutes
 
     def run
       begin
@@ -129,17 +129,18 @@ module Clacks
       end
     end
 
+    # http://tools.ietf.org/rfc/rfc2177.txt
     def imap_watchdog
       Thread.new do
         loop do
           begin
-            Clacks.logger.debug('watchdog is sleeping')
+            Clacks.logger.debug('watchdog sleeps')
             sleep(WATCHDOG_SLEEP)
-            Clacks.logger.debug('watchdog is awake')
+            Clacks.logger.debug('watchdog woke up')
             @imap.idle_done
-            Clacks.logger.debug('watchdog send idle done')
+            Clacks.logger.debug('watchdog signalled idle process')
           rescue StandardError => e
-            Clacks.logger.debug("watchdog received error: #{e.message} (#{e.class})\n#{(e.backtrace || []).join("\n")}")
+            Clacks.logger.debug { "watchdog received error: #{e.message} (#{e.class})\n#{(e.backtrace || []).join("\n")}" }
             # noop
           rescue Exception => e
             fatal(e)
