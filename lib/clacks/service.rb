@@ -11,7 +11,7 @@ module Clacks
     #   NAT Gateway timeout: typically after 15 minutes with an idle connection.
     # The solution to this is for the IMAP client to issue a NOOP (No Operation) command
     # at intervals, typically every 12 minutes.
-    IMAP_NOOP_SLEEP = 12 * 60   # 12 minutes
+    WATCHDOG_SLEEP = 5 * 60   # 5 minutes
 
     def run
       begin
@@ -88,7 +88,7 @@ module Clacks
     end
 
     def imap_idling(processor)
-      imap_nooper
+      imap_watchdog
       loop do
         begin
           processor.connection do |imap|
@@ -100,6 +100,7 @@ module Clacks
               finding { imap_find(imap) }
               # http://tools.ietf.org/rfc/rfc2177.txt
               imap.idle do |r|
+                Clacks.logger.debug('imap.idle yields')
                 if r.instance_of?(Net::IMAP::UntaggedResponse) && r.name == 'EXISTS'
                   imap.idle_done unless r.data == 0
                 elsif r.instance_of?(Net::IMAP::ContinuationRequest)
@@ -125,14 +126,19 @@ module Clacks
       end
     end
 
-    def imap_nooper
+    def imap_watchdog
       Thread.new do
         loop do
           begin
-            sleep IMAP_NOOP_SLEEP
+            Clacks.logger.debug('watchdog is sleeping')
+            sleep(WATCHDOG_SLEEP)
+            Clacks.logger.debug('watchdog is awake')
             @imap.idle_done
+            Clacks.logger.debug('watchdog send idle done')
             @imap.noop
-          rescue StandardError
+            Clacks.logger.debug('watchdog send noop')
+          rescue StandardError => e
+            Clacks.logger.debug("watchdog received error: #{e.message}")
             # noop
           rescue Exception => e
             fatal(e)
